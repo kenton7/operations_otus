@@ -36,7 +36,7 @@ class GetImage: Operation {
         operationQueue.maxConcurrentOperationCount = imageURLs.count
         
         for url in imageURLs {
-            guard let safeUrl = URL(string: url) else { continue }
+            guard let safeUrl = URL(string: url) else { return }
             
             let request = URLRequest(url: safeUrl)
             
