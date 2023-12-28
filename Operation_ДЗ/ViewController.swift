@@ -42,24 +42,37 @@ class ViewController: UIViewController {
         view.addSubview(tableView)
         //operationQueue()
         
-        GetImage.shared.completion = { image in
-            if let image = image {
+//        GetImage.shared.completion = { image in
+//            if let image = image {
+//                self.imagesArray.append(image)
+//            }
+//        }
+        //GetImage.shared.start()
+//        let urls = imageURLs.compactMap { URL(string: $0) }
+//        urls.forEach {
+//            ImageLoader.shared.loadImage(url: $0) { image in
+//                if let image = image {
+//                    self.imagesArray.append(image)
+//                }
+//            }
+//        }
+        
+        //РАНЕЕ
+        
+        imageURLs.forEach {
+            GetImage.shared.loadImages(from: $0) { image in
                 self.imagesArray.append(image)
             }
         }
-        GetImage.shared.start()
-    }
-    
-//    private func operationQueue() {
-//        let getImage = GetImage()
-//        getImage.queuePriority = .veryHigh
-//        getImage.qualityOfService = .userInitiated
-//        getImage.completion = { image in
-//            self.imagesArray.append(image)
-//            print(self.imagesArray.count)
+        
+//        GetImage.shared.completion = { image in
+//            if let image = image {
+//                self.imagesArray.append(image)
+//            }
 //        }
-//        getImage.start()
-//    }
+        GetImage.shared.start()
+        
+    }
 }
 
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
@@ -75,6 +88,7 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         cell.selectionStyle = .none
+
         DispatchQueue.main.async {
             cell.imageView?.image = self.imagesArray[indexPath.row]
         }
