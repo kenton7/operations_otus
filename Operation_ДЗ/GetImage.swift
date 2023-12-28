@@ -1,19 +1,12 @@
-//
-//  GetImage.swift
-//  Operation_ДЗ
-//
-//  Created by Илья Кузнецов on 27.12.2023.
-//
-
 import Foundation
 import UIKit
 
 class GetImage: Operation {
-    
+
     static let shared = GetImage()
-    
+
     private override init() {}
-    
+
     private let imageURLs = [
         "https://www.nastol.com.ua/pic/201509/1920x1200/nastol.com.ua-150653.jpg",
         "https://onn.az/wp-content/uploads/2021/06/sagzh-1920x1280-1.jpg",
@@ -23,37 +16,44 @@ class GetImage: Operation {
         "https://mykaleidoscope.ru/x/uploads/posts/2022-09/1663091157_62-mykaleidoscope-ru-p-gollandiya-vkontakte-68.jpg",
         "https://bonpic.com/download_img.php?dimg=5286&raz=1280x1024"
     ]
-    
-    var completion: ((UIImage?) -> Void)?
+
+    var completion: ((UIImage) -> Void)?
     let operationQueue = OperationQueue()
-    let cache = NSCache<NSString, UIImage>()
-    
+    let urlCache = URLCache.shared
+
     override func main() {
-        operationQueue.qualityOfService = .utility
+        let sessionConfig = URLSessionConfiguration.default
+        let urlSession = URLSession(configuration: sessionConfig)
+        operationQueue.qualityOfService = .userInitiated
+        operationQueue.isSuspended = true
         operationQueue.maxConcurrentOperationCount = imageURLs.count
-        
+
         for url in imageURLs {
-            
-            if let cachedImage = cache.object(forKey: url as NSString) {
-                print(cachedImage)
-                DispatchQueue.main.async {
-                    self.completion?(cachedImage)
-                }
+            guard let safeUrl = URL(string: url) else { continue }
+
+            let request = URLRequest(url: safeUrl)
+
+            if let cachedData = self.urlCache.cachedResponse(for: request)?.data, let cachedImage = UIImage(data: cachedData) {
+                print("cached")
+                self.completion?(cachedImage)
             } else {
-                
-                guard let safeUrl = URL(string: url) else { return }
-                
                 operationQueue.addOperation {
-                    if let data = try? Data(contentsOf: safeUrl),
-                       let image = UIImage(data: data) {
-                        print("downloading")
-                        self.cache.setObject(image, forKey: url as NSString)
-                        
-                        DispatchQueue.main.async {
+                    urlSession.dataTask(with: request) { data, response, error in
+                        if let error = error {
+                            print("Error: \(error)")
+                            return
+                        }
+
+                        if let data = data, let response = response, let image = UIImage(data: data) {
+                            let cachedData = CachedURLResponse(response: response, data: data)
+                            self.urlCache.storeCachedResponse(cachedData, for: request)
+                            print("no cache")
                             self.completion?(image)
                         }
-                    }
+                    }.resume()
                 }
+                operationQueue.isSuspended = false
+                operationQueue.waitUntilAllOperationsAreFinished()
             }
         }
     }

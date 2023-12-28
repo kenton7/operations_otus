@@ -43,9 +43,7 @@ class ViewController: UIViewController {
         //operationQueue()
         
         GetImage.shared.completion = { image in
-            if let image = image {
                 self.imagesArray.append(image)
-            }
         }
         GetImage.shared.start()
     }
