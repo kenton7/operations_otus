@@ -24,43 +24,36 @@ class GetImage: Operation {
         "https://bonpic.com/download_img.php?dimg=5286&raz=1280x1024"
     ]
     
-    var completion: ((UIImage) -> Void)?
+    var completion: ((UIImage?) -> Void)?
     let operationQueue = OperationQueue()
-    let urlCache = URLCache.shared
+    let cache = NSCache<NSString, UIImage>()
     
     override func main() {
-        let sessionConfig = URLSessionConfiguration.default
-        let urlSession = URLSession(configuration: sessionConfig)
-        operationQueue.qualityOfService = .userInitiated
-        operationQueue.isSuspended = true
+        operationQueue.qualityOfService = .utility
         operationQueue.maxConcurrentOperationCount = imageURLs.count
         
         for url in imageURLs {
-            guard let safeUrl = URL(string: url) else { return }
             
-            let request = URLRequest(url: safeUrl)
-            
-            if let cachedData = self.urlCache.cachedResponse(for: request)?.data, let cachedImage = UIImage(data: cachedData) {
-                print("cached")
-                self.completion?(cachedImage)
+            if let cachedImage = cache.object(forKey: url as NSString) {
+                print(cachedImage)
+                DispatchQueue.main.async {
+                    self.completion?(cachedImage)
+                }
             } else {
+                
+                guard let safeUrl = URL(string: url) else { return }
+                
                 operationQueue.addOperation {
-                    urlSession.dataTask(with: request) { data, response, error in
-                        if let error = error {
-                            print("Error: \(error)")
-                            return
-                        }
+                    if let data = try? Data(contentsOf: safeUrl),
+                       let image = UIImage(data: data) {
+                        print("downloading")
+                        self.cache.setObject(image, forKey: url as NSString)
                         
-                        if let data = data, let response = response, let image = UIImage(data: data) {
-                            let cachedData = CachedURLResponse(response: response, data: data)
-                            self.urlCache.storeCachedResponse(cachedData, for: request)
-                            print("no cache")
+                        DispatchQueue.main.async {
                             self.completion?(image)
                         }
-                    }.resume()
+                    }
                 }
-                operationQueue.isSuspended = false
-                operationQueue.waitUntilAllOperationsAreFinished()
             }
         }
     }

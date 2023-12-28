@@ -8,6 +8,16 @@
 import UIKit
 
 class ViewController: UIViewController {
+    
+    private let imageURLs = [
+        "https://www.nastol.com.ua/pic/201509/1920x1200/nastol.com.ua-150653.jpg",
+        "https://onn.az/wp-content/uploads/2021/06/sagzh-1920x1280-1.jpg",
+        "https://static.slobodnadalmacija.hr/images/slike/2023/01/12/24127418.jpg",
+        "https://content.assets.pressassociation.io/2017/07/18153241/17_7_5_WildcatKitten_SA_11.jpg",
+        "https://www.cestujlevne.com/obrazky/70/12/17012-2160w.jpg",
+        "https://mykaleidoscope.ru/x/uploads/posts/2022-09/1663091157_62-mykaleidoscope-ru-p-gollandiya-vkontakte-68.jpg",
+        "https://bonpic.com/download_img.php?dimg=5286&raz=1280x1024"
+    ]
 
     private var imagesArray = [UIImage]() {
         didSet {
@@ -33,7 +43,9 @@ class ViewController: UIViewController {
         //operationQueue()
         
         GetImage.shared.completion = { image in
-            self.imagesArray.append(image)
+            if let image = image {
+                self.imagesArray.append(image)
+            }
         }
         GetImage.shared.start()
     }
@@ -63,7 +75,9 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         cell.selectionStyle = .none
-        cell.imageView?.image = imagesArray[indexPath.row]
+        DispatchQueue.main.async {
+            cell.imageView?.image = self.imagesArray[indexPath.row]
+        }
         return cell
     }
     
