@@ -40,7 +40,6 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         view.addSubview(tableView)
-        //operationQueue()
         
         GetImage.shared.completion = { image in
             if let image = image {
@@ -49,17 +48,6 @@ class ViewController: UIViewController {
         }
         GetImage.shared.start()
     }
-    
-//    private func operationQueue() {
-//        let getImage = GetImage()
-//        getImage.queuePriority = .veryHigh
-//        getImage.qualityOfService = .userInitiated
-//        getImage.completion = { image in
-//            self.imagesArray.append(image)
-//            print(self.imagesArray.count)
-//        }
-//        getImage.start()
-//    }
 }
 
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
@@ -80,6 +68,5 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
         }
         return cell
     }
-    
 }
 
