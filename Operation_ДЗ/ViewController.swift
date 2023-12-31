@@ -41,12 +41,22 @@ class ViewController: UIViewController {
         
         view.addSubview(tableView)
         
-        GetImage.shared.completion = { image in
-            if let image = image {
-                self.imagesArray.append(image)
+        imageURLs.forEach { url in
+            if let data = UserDefaults.standard.data(forKey: url) {
+                let decodedData = try! PropertyListDecoder().decode(Data.self, from: data)
+                if let image = UIImage(data: decodedData) {
+                    print("Get image from Cache")
+                    self.imagesArray.append(image)
+                }
+            } else {
+                GetImage.shared.completion = { image, url in
+                    print("downloading image")
+                    self.imagesArray.append(image)
+                }
+                GetImage.shared.start(url: url)
             }
         }
-        GetImage.shared.start()
+
     }
 }
 
