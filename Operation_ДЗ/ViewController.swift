@@ -1,13 +1,6 @@
-//
-//  ViewController.swift
-//  Operation_ДЗ
-//
-//  Created by Илья Кузнецов on 27.12.2023.
-//
-
 import UIKit
 
-class ViewController: UIViewController {
+final class ViewController: UIViewController {
     
     private let imageURLs = [
         "https://www.nastol.com.ua/pic/201509/1920x1200/nastol.com.ua-150653.jpg",
@@ -16,9 +9,13 @@ class ViewController: UIViewController {
         "https://content.assets.pressassociation.io/2017/07/18153241/17_7_5_WildcatKitten_SA_11.jpg",
         "https://www.cestujlevne.com/obrazky/70/12/17012-2160w.jpg",
         "https://mykaleidoscope.ru/x/uploads/posts/2022-09/1663091157_62-mykaleidoscope-ru-p-gollandiya-vkontakte-68.jpg",
-        "https://bonpic.com/download_img.php?dimg=5286&raz=1280x1024"
+        "https://bonpic.com/download_img.php?dimg=5286&raz=1280x1024",
+        "https://wallbox.ru/resize/1600x1200/wallpapers/main2/201744/150962391459fb086aa45c62.75954367.jpg",
+        "https://c.wallhere.com/photos/71/aa/bridge_rocks_river_city_city_on_the_water_reflection-1059630.jpg!d",
+        "https://w.forfun.com/fetch/00/00dc65cb928157c9552569c7e959d40c.jpeg?w=1470&r=0.5625",
+        "https://images.hdqwalls.com/download/columbia-lake-2048x1152.jpg"
     ]
-
+    
     private var imagesArray = [UIImage]() {
         didSet {
             DispatchQueue.main.async {
@@ -32,7 +29,8 @@ class ViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         tableView.frame = view.bounds
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        tableView.register(CustomTableViewCell.self, forCellReuseIdentifier: CustomTableViewCell.cellID)
+        tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
         return tableView
     }()
 
@@ -41,22 +39,7 @@ class ViewController: UIViewController {
         
         view.addSubview(tableView)
         
-        imageURLs.forEach { url in
-            if let data = UserDefaults.standard.data(forKey: url) {
-                let decodedData = try! PropertyListDecoder().decode(Data.self, from: data)
-                if let image = UIImage(data: decodedData) {
-                    print("Get image from Cache")
-                    self.imagesArray.append(image)
-                }
-            } else {
-                GetImage.shared.completion = { image, url in
-                    print("downloading image")
-                    self.imagesArray.append(image)
-                }
-                GetImage.shared.start(url: url)
-            }
-        }
-
+        DownloadImage.shared.start()
     }
 }
 
@@ -67,14 +50,17 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return imagesArray.count
+        return imageURLs.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: CustomTableViewCell.cellID, for: indexPath) as? CustomTableViewCell else {
+            return UITableViewCell()
+        }
         cell.selectionStyle = .none
-        DispatchQueue.main.async {
-            cell.imageView?.image = self.imagesArray[indexPath.row]
+        
+        if let url = URL(string: imageURLs[indexPath.row]) {
+            cell.customImageView.loadImage(url)
         }
         return cell
     }
